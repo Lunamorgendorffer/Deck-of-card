@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+body {
+    background-color: #308834;
+}
+
 #main-container{
     display: flex;
     flex-direction: column;
@@ -25,6 +29,7 @@ button{
     width: 170px;
     font-size: 2em;
     font-family: calibri;
+    cursor: pointer;
 }
 
 #cards-container{
@@ -39,4 +44,10 @@ button{
 
 .card{
     width: 170px;
+}
+
+#error-container{
+    display:none; 
+    color: red; 
+    margin-top: 20px;
 }

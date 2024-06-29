@@ -3,18 +3,34 @@ async function callAPI (uri){
     console.log ("-- callApi - start -- ");
     console.log ( "uri=", uri);
     
-    //fetch(), appel à l'API et reception de la reponse 
-    const response = await fetch (uri);
-    console.log ( "reponse = ", response);
+    try{
+        //fetch(), appel à l'API et reception de la reponse 
+        const response = await fetch (uri);
+        console.log ( "reponse = ", response);
+        /* La propriété ok fait partie de l'interface Response de l'API Fetch en JavaScript. 
+        Elle indique si la requête HTTP a été effectuée avec succès. 
+        response.ok est un boolean qui est true si le statut de la réponse HTTP est compris entre 200 et 299, 
+        indiquant ainsi une requête réussie.*/
 
-    // recupartaion des donnes JSON de l'api 
-    const data = await response.json();
-    console.log ( "data = ", data);
+        // Vérifie si la réponse est correcte (statut entre 200 et 299)
+        if (!response.ok){
+            // Si la réponse n'est pas correcte, déclenche une erreur
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // recupartaion des donnes JSON de l'api 
+        const data = await response.json();
+        console.log ( "data = ", data);
+        console.log ("-- callApi - end -- ");
+        //renvoi des données
+        return data; 
+    } catch (error){
+        // Si une erreur survient, elle est capturée ici
+        console.error("Error during API call:", error);
+         // Affiche un message d'erreur à l'utilisateur
+        displayErrorMessage("An error occurred while contacting the server. Please try again later.");
+        throw error; // Relance l'erreur pour qu'elle soit gérée ailleurs
+    }
 
-    console.log ("-- callApi - end -- ");
-
-    //renvoi des données
-    return data; 
 }
 
 //Constant globale : l'uri du endpoint de demande de nuveau deck
@@ -61,19 +77,47 @@ const cleanDomCardsFromPreviousDeck = () =>
     )
 ;
 
+// Cette fonction affiche un message d'erreur dans l'interface utilisateur
+function displayErrorMessage(message) {
+    // Sélectionne l'élément HTML pour afficher les erreurs
+    const errorContainer = document.getElementById("error-container");
+    // Définit le texte de l'erreur
+    errorContainer.innerText = message;
+    // Affiche l'élément d'erreur en dislay block 
+    errorContainer.style.display = "block";
+}
+
+// Cette fonction cache le message d'erreur
+function hideErrorMessage() {
+    // Sélectionne l'élément HTML pour afficher les erreurs
+    const errorContainer = document.getElementById("error-container");
+    // Vide le texte de l'erreur
+    errorContainer.innerText = ""; 
+    // Cache l'élément d'erreur
+    errorContainer.style.display = "none"; 
+}
+
 // fonction de reinitialisation ( demande de nouveau deck + demande de melange de ce nouveau deck)
 async function actionReset() {
+    // Cache les messages d'erreur précédents
+    hideErrorMessage();
     //vider dans le DOM les cartes de l'ancien deck
     cleanDomCardsFromPreviousDeck ();
+    try {
+        //recuperation d'un nouveau deck
+        const newDeckResponse = await getNewDeck();
+    
+        //recuperation de l'id de ce nouveau deck dans les données recues et maj de la variable globale 
+        idDeck = newDeckResponse.deck_id;
+        
+        //melange du deck
+        await shuffleDeck();
+    } catch (error) {
+        // Affiche une erreur si quelque chose ne va pas
+        console.error("Error in actionReset:", error);
+    }
 
-    //recuperation d'un nouveau deck
-    const newDeckResponse = await getNewDeck();
 
-    //recuperation de l'id de ce nouveau deck dans les données recues et maj de la variable globale 
-    idDeck = newDeckResponse.deck_id;
-
-    //melange du deck
-    await shuffleDeck();
 }
 
 //elements HTML utiles pour les evenements et pour la manipulation du DOM 
@@ -81,7 +125,6 @@ const cardsContainer = document.getElementById("cards-container");
 
 //ajoute une carte dans le DOM d'apres l'Uri de son image 
 function addCardtoDomByImgUri(imgUri){
-    console.log ( "hello");
     //creation de l'element HTM "img", de class CSS "card" et avec pour attribut HTML "src" l'URI recue en argument 
     const imgCardHtmlElement = document.createElement("img");
     imgCardHtmlElement.classList.add("card");
@@ -94,16 +137,22 @@ function addCardtoDomByImgUri(imgUri){
 
 //fonction qui demande à picoher une carte puis qui fait l'appel pour l'integrer dan sle DOM 
 async function actionDraw(){
-    //appel à l'api pour demander au coupier de picoher une carte et de nous la renvoyer 
-    const drawCardResponse = await drawCard ();
-
-    console.log ("drawCardResponse =", drawCardResponse);
-
-    //recuperation de m'uri de l'image de cette carte dans les données recues 
-    const imgCardUri = drawCardResponse.cards[0].image;
-
-    //ajout de la carte piochée dans la zone des cartes piochées 
-    addCardtoDomByImgUri(imgCardUri);
+   // Cache les messages d'erreur précédents
+    hideErrorMessage();
+    try {
+        //appel à l'api pour demander au coupier de picoher une carte et de nous la renvoyer 
+        const drawCardResponse = await drawCard ();
+    
+        console.log ("drawCardResponse =", drawCardResponse);
+    
+        //recuperation de m'uri de l'image de cette carte dans les données recues 
+        const imgCardUri = drawCardResponse.cards[0].image;
+    
+        //ajout de la carte piochée dans la zone des cartes piochées 
+        addCardtoDomByImgUri(imgCardUri);
+    } catch (error) {
+        console.error("Error in actionDraw:", error);
+    }
 }
 
 //appel d'initialisation au lancement de l'application 
@@ -113,6 +162,7 @@ actionReset();
 const actionResetButton = document.getElementById("action-reset"); 
 const actionDrawButton = document.getElementById ("action-draw");
 
-
+// Ajoute un événement de clic au bouton de réinitialisation pour appeler la fonction actionReset
 actionResetButton.addEventListener ("click",actionReset);
+// Ajoute un événement de clic au bouton de pioche pour appeler la fonction actionDraw
 actionDrawButton.addEventListener ("click",actionDraw);
