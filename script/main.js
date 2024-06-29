@@ -72,6 +72,24 @@ async function drawMultipleCards(count) {
     return await callAPI(uri);
 }
 
+// Fonction pour ajouter des cartes à une pile
+async function addToPile(pileName, cards) {
+    const uri = `https://www.deckofcardsapi.com/api/deck/${idDeck}/pile/${pileName}/add/?cards=${cards}`;
+    return await callAPI(uri);
+}
+
+// Fonction pour lister les cartes dans une pile
+async function listPile(pileName) {
+    const uri = `https://www.deckofcardsapi.com/api/deck/${idDeck}/pile/${pileName}/list/`;
+    return await callAPI(uri);
+}
+
+// Fonction pour piocher des cartes d'une pile
+async function drawFromPile(pileName, count) {
+    const uri = `https://www.deckofcardsapi.com/api/deck/${idDeck}/pile/${pileName}/draw/?count=2`;
+    return await callAPI(uri);
+}
+
 //supprime les cartes de l'ancien deck du DOM 
 const cleanDomCardsFromPreviousDeck = () =>
     // recuperation de cartes 
@@ -178,9 +196,46 @@ const actionDrawMultipleButton = document.getElementById("action-draw-multiple")
 // Fonction pour piocher plusieurs cartes
 actionDrawMultipleButton.addEventListener("click", async () => {
     try {
-        const response = await drawMultipleCards(2);
+        const response = await drawMultipleCards(5);
         response.cards.forEach(card => addCardtoDomByImgUri(card.image));
     } catch (error) {
         console.error("Error in actionDrawMultiple:", error);
+    }
+});
+
+const actionAddToPileButton = document.getElementById("action-add-to-pile");
+// Fonction pour ajouter des cartes à une pile
+actionAddToPileButton.addEventListener("click", async () => {
+    try {
+        await addToPile('discard', 'AS,2S');
+    } catch (error) {
+        console.error("Error in actionAddToPile:", error);
+    }
+});
+
+const actionListPileButton = document.getElementById("action-list-pile");
+// Fonction pour lister les cartes dans une pile
+actionListPileButton.addEventListener("click", async () => {
+    try {
+        const response = await listPile('discard');
+        console.log("Full response from listPile:", response); 
+        if (response.piles && response.piles.discard && response.piles.discard.cards) {
+            console.log("Pile contents:", response.piles.discard.cards);
+        } else {
+            console.log("No cards found in the pile 'discard'.");
+        }
+    } catch (error) {
+        console.error("Error in actionListPile:", error);
+    }
+});
+
+const actionDrawFromPileButton = document.getElementById("action-draw-from-pile");
+// Fonction pour piocher des cartes d'une pile
+actionDrawFromPileButton.addEventListener("click", async () => {
+    try {
+        const response = await drawFromPile('discard', 2);
+        response.cards.forEach(card => addCardtoDomByImgUri(card.image));
+    } catch (error) {
+        console.error("Error in actionDrawFromPile:", error);
     }
 });
