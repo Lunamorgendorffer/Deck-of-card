@@ -66,6 +66,12 @@ async function drawCard(){
     return await callAPI(getApiEndpointDrawCard());
 }
 
+// Fonction pour piocher plusieurs cartes
+async function drawMultipleCards(count) {
+    const uri = `https://www.deckofcardsapi.com/api/deck/${idDeck}/draw/?count=${count}`;
+    return await callAPI(uri);
+}
+
 //supprime les cartes de l'ancien deck du DOM 
 const cleanDomCardsFromPreviousDeck = () =>
     // recuperation de cartes 
@@ -166,3 +172,15 @@ const actionDrawButton = document.getElementById ("action-draw");
 actionResetButton.addEventListener ("click",actionReset);
 // Ajoute un événement de clic au bouton de pioche pour appeler la fonction actionDraw
 actionDrawButton.addEventListener ("click",actionDraw);
+
+
+const actionDrawMultipleButton = document.getElementById("action-draw-multiple");
+// Fonction pour piocher plusieurs cartes
+actionDrawMultipleButton.addEventListener("click", async () => {
+    try {
+        const response = await drawMultipleCards(2);
+        response.cards.forEach(card => addCardtoDomByImgUri(card.image));
+    } catch (error) {
+        console.error("Error in actionDrawMultiple:", error);
+    }
+});
